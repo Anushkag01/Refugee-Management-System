@@ -1,12 +1,9 @@
 # Refugee-Management-System (RMS)
-A full-stack web application designed to streamline operations for humanitarian aid camps. Features role-based access control for Camp Managers and Refugees, automated inventory tracking via SQL triggers, and real-time analytics dashboards. Built with Flask, MySQL, and Tailwind CSS.
-
-# Refugee Management System (RMS) 🌍🤝
-
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
 ![Flask](https://img.shields.io/badge/Flask-2.0%2B-green)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-blueviolet)
+A full-stack web application designed to streamline operations for humanitarian aid camps. Features role-based access control for Camp Managers and Refugees, automated inventory tracking via SQL triggers, and real-time analytics dashboards. Built with Flask, MySQL, and Tailwind CSS.
 
 ## 📖 Overview
 The **Refugee Management System** is a full-stack centralized platform designed to streamline humanitarian aid operations. It replaces manual record-keeping with a secure, digital ecosystem that connects Camp Managers, Volunteers, Refugees, and Donors.
