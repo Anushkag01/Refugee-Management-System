@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sign Up — Refugee Management System</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">RMS</div>
+      <div>
+        <h1>Refugee Management System</h1>
+      </div>
+    </div>
+    <div>
+      <a href="index.html" class="btn">Back</a>
+    </div>
+  </header>
+
+  <main style="display:flex;align-items:center;justify-content:center;padding:40px">
+    <div style="width:520px">
+      <div class="card">
+        <div style="font-weight:700;margin-bottom:8px">Create account</div>
+        <div class="muted" style="margin-bottom:12px">Choose role and enter basic details</div>
+
+        <div>
+          <label class="muted">Role</label>
+          <select id="su-role" class="input">
+            <option value="Volunteer">Volunteer</option>
+            <option value="Refugee">Refugee</option>
+            <option value="Donor">Donor</option>
+          </select>
+        </div>
+
+        <div style="margin-top:8px">
+          <input id="su-username" class="input" placeholder="username" />
+          <input id="su-password" class="input" placeholder="password" type="password" />
+        </div>
+
+        <div id="profile-fields" style="margin-top:8px">
+          <!-- role-specific fields injected here -->
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button class="btn" onclick="submitSignup()">Create account</button>
+          <div class="muted right">Accounts are stored locally for demo</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+  <script>
+    const profileFields = document.getElementById('profile-fields');
+    const roleEl = document.getElementById('su-role');
+    function renderProfileFields() {
+      const role = roleEl.value;
+      if (role === 'Volunteer') {
+        profileFields.innerHTML = `
+          <input id="su-first" class="input" placeholder="First name" />
+          <input id="su-last" class="input" placeholder="Last name" />
+          <input id="su-domain" class="input" placeholder="Domain (e.g. Medical, Logistics)" />
+        `;
+      } else if (role === 'Refugee') {
+        profileFields.innerHTML = `
+          <input id="su-first" class="input" placeholder="First name" />
+          <input id="su-last" class="input" placeholder="Last name" />
+          <input id="su-dob" class="input" placeholder="Date of birth" type="date" />
+          <input id="su-country" class="input" placeholder="Country of origin" />
+        `;
+      } else if (role === 'Donor') {
+        profileFields.innerHTML = `
+          <input id="su-donor-name" class="input" placeholder="Organization or donor name" />
+        `;
+      }
+    }
+    roleEl.addEventListener('change', renderProfileFields);
+    renderProfileFields();
+
+    async function submitSignup() {
+      const username = document.getElementById('su-username').value.trim();
+      const password = document.getElementById('su-password').value.trim();
+      const role = document.getElementById('su-role').value;
+      if (!username || !password) { alert('Enter username and password'); return; }
+
+     
+      const payload = { username, password, role };
+      if (role === 'Volunteer') {
+        payload.first_name = document.getElementById('su-first').value.trim();
+        payload.last_name = document.getElementById('su-last').value.trim();
+        payload.domain = document.getElementById('su-domain').value.trim();
+      } else if (role === 'Refugee') {
+        payload.first_name = document.getElementById('su-first').value.trim();
+        payload.last_name = document.getElementById('su-last').value.trim();
+        payload.date_of_birth = document.getElementById('su-dob').value || null;
+        payload.country_of_origin = document.getElementById('su-country').value.trim() || null;
+      } else if (role === 'Donor') {
+        payload.donor_name = document.getElementById('su-donor-name').value.trim() || username;
+      }
+
+     
+      if (typeof registerNewUser === 'function') {
+        try {
+          const ok = await registerNewUser(payload);
+          if (ok) {
+           
+           
+            switch (role) {
+              case 'Volunteer': window.location.href = 'volunteer.html'; break;
+              case 'Refugee': window.location.href = 'refugee.html'; break;
+              case 'Donor': window.location.href = 'donor.html'; break;
+              default: window.location.href = 'index.html';
+            }
+            return;
+          } else {
+            alert('Account creation failed');
+          }
+        } catch (e) {
+          console.error('Signup error', e); alert('Signup failed');
+        }
+      } else {
+        alert('Registration not available');
+      }
+    }
+  </script>
+</body>
+</html>

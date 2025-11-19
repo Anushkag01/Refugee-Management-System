@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Camp Manager Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">RMS</div>
+      <div>
+        <h1>Refugee Management System</h1>
+      </div>
+    </div>
+    <div>
+      <button class="btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="full">
+    <section class="content" id="canvas"></section>
+  </main>
+
+  <!-- REGISTER REFUGEE MODAL -->
+  <div class="modal" id="modal-register">
+    <div class="window card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><strong>Register Refugee</strong><div class="muted">Enter new refugee details</div></div>
+        <div><button class="btn" onclick="closeRegister()">Close</button></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <input class="input" id="reg-first" placeholder="First name" />
+        <input class="input" id="reg-middle" placeholder="Middle name (optional)" />
+        <input class="input" id="reg-last" placeholder="Last name" />
+        <input class="input" id="reg-dob" placeholder="Date of birth" type="date" />
+        <input class="input" id="reg-country" placeholder="Country of origin" />
+        <select class="input" id="reg-status" style="margin-top:8px">
+          <option value="Registered">Registered</option>
+          <option value="Asylum Seeker">Asylum Seeker</option>
+          <option value="Approved">Approved</option>
+          <option value="Departed">Departed</option>
+        </select>
+        <input class="input" id="reg-skills" placeholder="Skills (comma separated)" />
+        <select class="input" id="reg-camp" style="margin-top:8px">
+          <option value="auto">Auto-assign best available camp</option>
+        </select>
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button class="btn" onclick="submitRegisterRefugee()">Register</button>
+          <div class="muted right">Adds refugee to selected camp</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+   
+   
+    window.location.replace('index.html');
+  </script>
+</body>
+</html>

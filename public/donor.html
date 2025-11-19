@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donor Dashboard</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">RMS</div>
+      <div>
+        <h1>Refugee Management System</h1>
+      </div>
+    </div>
+    <div>
+      <button class="btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main class="full">
+    <section class="content" id="canvas"></section>
+  </main>
+
+  <script>
+ 
+  window.RMS_API_BASE = window.RMS_API_BASE || 'http://localhost:5001';
+  </script>
+  <script src="script.js"></script>
+  <script>
+   
+    (function(){
+      const API_BASE = window.RMS_API_BASE || 'http://localhost:4000';
+      const LOCAL_KEY = 'rms_local_donations_v2';
+      let localDonations = [];
+
+      function loadLocal() {
+        try {
+          const raw = localStorage.getItem(LOCAL_KEY);
+          if (!raw) { localDonations = []; return; }
+          localDonations = JSON.parse(raw) || [];
+        } catch (e) { console.warn('Could not load local donations', e); localDonations = []; }
+      }
+
+      function saveLocal() {
+        try { localStorage.setItem(LOCAL_KEY, JSON.stringify(localDonations)); } catch (e) { console.warn('Could not save local donations', e); }
+      }
+
+      function amountToINR(amount) { return amount ? Math.round(amount * 83) : null; }
+
+      function renderUI() {
+        const canvas = document.getElementById('canvas');
+        canvas.innerHTML = `
+          <div class='grid' style='margin-bottom:12px'>
+            <div class='widget'><div class='muted'>Impact & Transparency</div><div class='big'>Donor Portal</div></div>
+            <div class='widget'><div class='muted'>Your Donations</div><div class='muted' id='donor-sum'>$0 (₹0)</div></div>
+            <div class='widget'><div class='muted'>Audit Trail</div><div class='log' id='donor-audit'></div></div>
+          </div>
+
+          <div class='card widget full'>
+            <div style='display:flex;align-items:center;justify-content:space-between'>
+              <div style='font-weight:700'>Make a Donation</div>
+              <div class='muted'>Support refugees with targeted aid</div>
+            </div>
+            <div style='margin-top:12px'>
+              <div style='display:grid;grid-template-columns:1fr 1fr;gap:8px'>
+                <div>
+                  <label class='muted'>Your Name</label>
+                  <input id='donor-name' type='text' placeholder='Full name' />
+                </div>
+                <div>
+                  <label class='muted'>Organisation (optional)</label>
+                  <input id='donor-org' type='text' placeholder='Organisation name' />
+                </div>
+                <div>
+                  <label class='muted'>Amount (USD)</label>
+                  <input id='donor-amount' type='number' min='0' step='1' placeholder='Amount in USD' />
+                </div>
+                <div>
+                  <label class='muted'>Quantity (for in-kind donations)</label>
+                  <input id='donor-qty' type='number' min='0' step='1' placeholder='Quantity (e.g., boxes)' />
+                </div>
+                <div>
+                  <label class='muted'>Type of Donation</label>
+                  <select id='donor-type'>
+                    <option value='Financial'>Financial</option>
+                    <option value='Food'>Food</option>
+                    <option value='Clothing'>Clothing</option>
+                    <option value='Medicine'>Medicine</option>
+                    <option value='Hygiene'>Hygiene Kit</option>
+                    <option value='Other'>Other</option>
+                  </select>
+                </div>
+              </div>
+              <div style='margin-top:12px;display:flex;gap:8px;justify-content:flex-end'>
+                <button id='donor-donate' class='btn'>Donate</button>
+                <button id='donor-refresh' class='btn'>Refresh</button>
+              </div>
+            </div>
+          </div>
+
+          <div class='card widget' style='margin-top:12px'>
+            <div class='muted'>Donations</div>
+            <div class='muted' style='margin-top:8px'>All donations submitted from this portal (past & present)</div>
+            <div style='margin-top:12px'>
+              <table id='donor-donations-table' style='width:100%'>
+                <thead><tr><th>Donor</th><th>Organisation</th><th>Type</th><th style='text-align:right'>Amount (USD)</th><th style='text-align:right'>Amount (INR)</th><th style='text-align:right'>Qty</th><th>Date</th><th>State</th></tr></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        `;
+
+       
+        document.getElementById('donor-donate').addEventListener('click', onDonate);
+        document.getElementById('donor-refresh').addEventListener('click', async () => { await syncFromServer(); renderAll(); });
+        document.getElementById('donor-type').addEventListener('change', (e) => {
+          const t = e.target.value;
+          const amt = document.getElementById('donor-amount');
+          const qty = document.getElementById('donor-qty');
+          if (t === 'Financial') { amt.disabled = false; amt.style.display=''; qty.disabled=true; qty.style.display='none'; qty.value=''; }
+          else { amt.disabled = true; amt.style.display='none'; amt.value=''; qty.disabled=false; qty.style.display=''; }
+        });
+      }
+
+      function renderAll() {
+       
+        const name = (document.getElementById('donor-name')?.value || '').trim();
+        let shown = [];
+        if (name) shown = localDonations.filter(d => (d.donor_name||'').toLowerCase() === name.toLowerCase());
+        else shown = localDonations.slice();
+
+       
+        const tbody = document.querySelector('#donor-donations-table tbody');
+        tbody.innerHTML = '';
+        let totalUSD = 0, totalINR = 0;
+        shown.slice().reverse().forEach(d => {
+          const tr = document.createElement('tr');
+          const amt = d.amount!=null?`$${(d.amount).toLocaleString()}`:'-';
+          const inr = d.amount_inr?`₹${(d.amount_inr).toLocaleString()}`:'-';
+          const qty = d.quantity!=null?d.quantity:'-';
+          const state = d.synced?'<span style="color:#4ef0a1">Synced</span>':'<span style="color:#ffd166">Local</span>';
+          tr.innerHTML = `<td>${escapeHtml(d.donor_name||'')}</td><td>${escapeHtml(d.organization_name||'')}</td><td>${escapeHtml(d.donation_type||'-')}</td><td style='text-align:right'>${amt}</td><td style='text-align:right'>${inr}</td><td style='text-align:right'>${qty}</td><td>${d.donation_date||''}</td><td>${state}</td>`;
+          tbody.appendChild(tr);
+          totalUSD += d.amount||0; totalINR += d.amount_inr||0;
+        });
+       
+        const totalRow = document.createElement('tr');
+        totalRow.style.fontWeight='700';
+        totalRow.innerHTML = `<td colspan='3'>Totals</td><td style='text-align:right'>$${totalUSD.toLocaleString()}</td><td style='text-align:right'>₹${totalINR.toLocaleString()}</td><td></td><td></td><td></td>`;
+        tbody.appendChild(totalRow);
+
+       
+        const sumEl = document.getElementById('donor-sum');
+        if (sumEl) sumEl.innerText = `$${totalUSD.toLocaleString()} (₹${totalINR.toLocaleString()})`;
+
+       
+        const audit = document.getElementById('donor-audit');
+        if (audit) audit.innerHTML = shown.slice(-5).map(d => ` <div class='log-item'>Donation ${d.amount?`$${d.amount}`:'in-kind'} on ${d.donation_date} → ${d.synced? 'recorded':'local'}</div>`).join('');
+      }
+
+      function escapeHtml(s) { return String(s).replace(/[&<>"]+/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+      async function onDonate() {
+        const name = (document.getElementById('donor-name')?.value || '').trim();
+        const org = (document.getElementById('donor-org')?.value || '').trim();
+        const type = document.getElementById('donor-type')?.value || 'Financial';
+        const amount = parseFloat((document.getElementById('donor-amount')?.value)||0) || null;
+        const qty = parseInt((document.getElementById('donor-qty')?.value)||0,10) || null;
+        if (!name) { alert('Please enter your name'); return; }
+        if (type==='Financial' && (!amount || amount<=0)) { alert('Please enter a valid amount'); return; }
+        if (type!=='Financial' && (!qty || qty<=0)) { alert('Please enter a valid quantity'); return; }
+
+        const donation = {
+          local_id: 'l-'+Date.now()+'-'+Math.floor(Math.random()*1000),
+          donor_name: name,
+          organization_name: org || null,
+          donation_type: type,
+          amount: amount,
+          amount_inr: amount?amountToINR(amount):null,
+          quantity: qty,
+          donation_date: new Date().toISOString(),
+          synced: false
+        };
+        localDonations.push(donation);
+        saveLocal();
+        renderAll();
+
+       
+        try {
+          const resp = await fetch(API_BASE + '/api/donations', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ donor_name: donation.donor_name, organization_name: donation.organization_name, donation_type: donation.donation_type, amount: donation.amount, amount_inr: donation.amount_inr, quantity: donation.quantity, donation_date: donation.donation_date })
+          });
+          if (resp.ok) {
+            const j = await resp.json();
+            if (j && j.success && j.donation_id) {
+              donation.server_id = j.donation_id; donation.synced = true; saveLocal(); renderAll();
+            }
+          }
+        } catch (e) { console.warn('Upload failed, will retry later', e); }
+      }
+
+      async function syncFromServer() {
+       
+        try {
+          const resp = await fetch(API_BASE + '/api/donations');
+          if (!resp.ok) return;
+          const j = await resp.json();
+          if (!j || !j.success) return;
+         
+          const server = (j.donations||[]).map(d => ({ server_id:d.donation_id, donor_name:null, donor_id:d.donor_id, organization_name:d.organization_name, donation_type:d.donation_type, amount: d.amount?parseFloat(d.amount):null, amount_inr: d.amount_inr||null, quantity: d.quantity||null, donation_date: d.donation_date, synced:true }));
+         
+          const unsynced = localDonations.filter(x => !x.synced);
+          localDonations = server.concat(unsynced);
+          saveLocal();
+          renderAll();
+        } catch (e) { console.warn('sync failed', e); }
+      }
+
+     
+      loadLocal(); renderUI(); renderAll();
+     
+      setInterval(async () => {
+        const toUpload = localDonations.filter(d => !d.synced);
+        for (const d of toUpload) {
+          try {
+            const resp = await fetch(API_BASE + '/api/donations', { method:'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ donor_name:d.donor_name, organization_name:d.organization_name, donation_type:d.donation_type, amount:d.amount, amount_inr:d.amount_inr, quantity:d.quantity, donation_date:d.donation_date }) });
+            if (resp.ok) { const j = await resp.json(); if (j && j.success) { d.server_id = j.donation_id; d.synced = true; saveLocal(); renderAll(); } }
+          } catch (e) {  }
+        }
+      }, 30000);
+    })();
+  </script>
+    <script>
+     
+     
+      window.location.replace('index.html');
+    </script>
+</body>
+</html>

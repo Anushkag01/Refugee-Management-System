@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Refugee Management System — UI Demo</title>
+
+  <!-- Link to external style & script -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="landing">
+  <header>
+    <div class="brand">
+      <div class="logo">RMS</div>
+      <div>
+        <h1>Refugee Management System</h1>
+      </div>
+    </div>
+    <div>
+      <button class="btn" onclick="logout()">Logout</button>
+    </div>
+  </header>
+
+  <main>
+    <aside class="sidebar">
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:56px;height:56px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#01101a">AI</div>
+          <div>
+            <div style="font-weight:700">Operations Console</div>
+            <div class="muted">Select your portal to sign in</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="portal">
+        <!-- Open login modal for each portal so users must sign in -->
+        <button onclick="openLogin('Admin')"><strong>Administrator</strong><div class="small">Full system control & dashboards</div></button>
+        <button onclick="openLogin('Manager')"><strong>Camp Manager</strong><div class="small">Camp occupancy & refugee registration</div></button>
+        <button onclick="openLogin('Volunteer')"><strong>Volunteer</strong><div class="small">Field tasks & aid distribution</div></button>
+        <button onclick="openLogin('Refugee')"><strong>Refugee</strong><div class="small">Personal profile & aid history</div></button>
+        <button onclick="openLogin('Donor')"><strong>Donor / Organization</strong><div class="small">Donations & impact reports</div></button>
+      </div>
+      <div style="margin-top:12px; text-align:center">
+        <button class="btn" style="display:inline-block;padding:8px 12px" onclick="openSignup()">Sign Up</button>
+      </div>
+      
+    </aside>
+
+    <section class="content">
+      <div id="canvas"></div>
+    </section>
+  </main>
+
+  <!-- LOGIN MODAL -->
+  <div class="modal" id="modal-login">
+    <div class="window card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><strong id="login-role">Sign In</strong><div class="muted" id="login-sub">Enter credentials</div></div>
+        <div><button class="btn" onclick="closeLogin()">Close</button></div>
+      </div>
+
+      <div style="margin-top:12px">
+        <input class="input" id="inp-user" placeholder="username" />
+        <input class="input" id="inp-pass" placeholder="password" type="password" />
+        <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+          <button class="btn" onclick="submitLogin()">Sign In</button>
+          <div class="muted right" id="login-help">Demo mode — any demo creds work</div>
+        </div>
+      </div>
+    </div>
+  </div>
+        
+        <!-- SIMULATE AID MODAL -->
+        <div class="modal" id="modal-simulate">
+          <div class="window card">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <div><strong>Simulate Aid Distribution</strong><div class="muted">Select refugee and aid to distribute</div></div>
+              <div><button class="btn" onclick="closeSimulate()">Close</button></div>
+            </div>
+
+            <div style="margin-top:12px">
+              <label class="muted">Refugee</label>
+              <select id="sim-refugee" class="input"></select>
+              <label class="muted">Aid Type</label>
+              <select id="sim-aid" class="input"></select>
+              <input id="sim-qty" class="input" type="number" placeholder="Quantity" value="1" min="1" />
+              <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+                <button class="btn" onclick="applySimulation()">Distribute</button>
+                <div class="muted right">This updates aid stock and audit trail</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+              <!-- REGISTER REFUGEE MODAL -->
+              <div class="modal" id="modal-register">
+                <div class="window card">
+                  <div style="display:flex;align-items:center;justify-content:space-between">
+                    <div><strong>Register Refugee</strong><div class="muted">Enter new refugee details</div></div>
+                    <div><button class="btn" onclick="closeRegister()">Close</button></div>
+                  </div>
+
+                  <div style="margin-top:12px">
+                    <input class="input" id="reg-first" placeholder="First name" />
+                    <input class="input" id="reg-middle" placeholder="Middle name (optional)" />
+                    <input class="input" id="reg-last" placeholder="Last name" />
+                    <input class="input" id="reg-dob" placeholder="Date of birth" type="date" />
+                    <input class="input" id="reg-country" placeholder="Country of origin" />
+                    <select class="input" id="reg-status" style="margin-top:8px">
+                      <option value="Registered">Registered</option>
+                      <option value="Asylum Seeker">Asylum Seeker</option>
+                      <option value="Approved">Approved</option>
+                      <option value="Departed">Departed</option>
+                    </select>
+                    <input class="input" id="reg-skills" placeholder="Skills (comma separated)" />
+                    <select class="input" id="reg-camp" style="margin-top:8px">
+                      <option value="auto">Auto-assign best available camp</option>
+                    </select>
+                    <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+                      <button class="btn" onclick="submitRegisterRefugee()">Register</button>
+                      <div class="muted right">Adds refugee to selected camp</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+                    <!-- SIGNUP MODAL (inline) -->
+                    <div class="modal" id="modal-signup">
+                      <div class="window card">
+                        <div style="display:flex;align-items:center;justify-content:space-between">
+                          <div><strong>Create account</strong><div class="muted">Create Volunteer, Refugee or Donor account</div></div>
+                          <div><button class="btn" onclick="closeSignup()">Close</button></div>
+                        </div>
+                        <div style="margin-top:12px">
+                          <label class="muted">Role</label>
+                          <select id="su-role-modal" class="input">
+                            <option value="Volunteer">Volunteer</option>
+                            <option value="Refugee">Refugee</option>
+                            <option value="Donor">Donor</option>
+                          </select>
+                          <input class="input" id="su-username-modal" placeholder="username" />
+                          <input class="input" id="su-password-modal" placeholder="password" type="password" />
+                          <div id="su-profile-fields-modal" style="margin-top:8px"></div>
+                          <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+                            <button class="btn" onclick="submitSignupModal()">Create account</button>
+                            <div class="muted right">Accounts will be stored locally for demo</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+        <script src="script.js"></script>
+</body>
+</html>
