@@ -3,6 +3,7 @@
 ![Flask](https://img.shields.io/badge/Flask-2.0%2B-green)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-orange)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-blueviolet)
+
 A full-stack web application designed to streamline operations for humanitarian aid camps. Features role-based access control for Camp Managers and Refugees, automated inventory tracking via SQL triggers, and real-time analytics dashboards. Built with Flask, MySQL, and Tailwind CSS.
 
 ## 📖 Overview
